@@ -21,111 +21,129 @@ expenses = {
     "2023-04": {}
 };
 
+// ==========================================================================================================================================================
+
 function solution1(expenses) {
-    let results = {};
+    const allExpenses = [];
+    
+    // Funkcja pomocnicza do znalezienia pierwszej niedzieli w miesiącu
+    function getFirstSunday(year, month) {
+        for (let day = 1; day <= 7; day++) { // do 7, ponieważ pierwsza niedziela nie może być później   
+            const date = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+            if (date.getDay() === 0) return day; // Niedziela = 0
+        }
+        return null;
+    }
 
     for (const month in expenses) {
-        let days = Object.keys(expenses[month]).map(Number).sort((a, b) => a - b);
-
-        let firstSunday = null;
-        for (let day of days) {
-            const date = new Date(`${month}-${String(day).padStart(2, '0')}`);
-            if (date.getDay() === 0) { // Niedziela
-                firstSunday = day;
-                break;
-            }
-        }
-
-        let allExpenses = [];
-        if (firstSunday !== null) {
-            for (let day of days) {
-                if (day > firstSunday) break;
-
-                const dayExpenses = expenses[month][String(day).padStart(2, '0')];
-                for (let category in dayExpenses) {
-                    allExpenses.push(...dayExpenses[category]);
+        const [year, monthNum] = month.split('-');
+        const firstSunday = getFirstSunday(year, monthNum);
+        
+        for (const day in expenses[month]) {
+            const dayNum = parseInt(day, 10);
+            if (dayNum <= firstSunday) {
+                // Zbieramy wydatki z dni <= pierwszej niedzieli
+                for (const category in expenses[month][day]) {
+                    allExpenses.push(...expenses[month][day][category]);
                 }
             }
         }
-
-        results[month] = allExpenses.length > 0 ? medianSol1(allExpenses) : null;
     }
 
-    return results;
+    if (allExpenses.length === 0) return null;
+
+    // Sortowanie i wyznaczanie mediany
+    allExpenses.sort((a, b) => a - b);
+    const mid = Math.floor(allExpenses.length / 2);
+    return allExpenses.length % 2 === 0
+        ? (allExpenses[mid - 1] + allExpenses[mid]) / 2
+        : allExpenses[mid];
 }
 
-// Wywołanie funkcji solution1
-const result1 = solution1(expenses);
-console.log("Wynik z solution1:", result1);
+// ==========================================================================================================================================================
 
+/*
+    Quick Select pozwala na znalezienie k-tego elementu (np. elementu środkowego dla mediany) bez pełnego sortowania, co przyspiesza obliczenia.
+    
+    Złożoność czasowa:
+    -Średni czas działania: O(n), gdzie n to liczba elementów w tablicy.
+    -Najgorszy przypadek: O(n²), jeśli wybór pivota jest nieoptymalny.
 
-function medianSol1(arr) {
-    arr.sort((a, b) => a - b);
-    const mid = Math.floor(arr.length / 2);
-    return arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
-}
+    Quick Select działa in-place, co oznacza, że nie wymaga dodatkowej pamięci (poza rekurencją), w przeciwieństwie do metod sortujących, które mogą wymagać kopii tablicy.
 
+    Zalety:
+    -Szybsze działanie - dla dużych zbiorów danych Quick Select jest znacznie szybszy od pełnego sortowania, ponieważ koncentruje się tylko na znalezieniu wartości środkowej (k-tego elementu).
+    -Oszczędność obliczeń - nie musimy sortować całej tablicy – algorytm przetwarza jedynie te elementy, które są potrzebne do znalezienia mediany.
+    -Optymalizacja dla dużych danych - w zadaniach z dużą liczbą danych (np. tysiące liczb) różnica między O(n) a O(n log n) staje się zauważalna.
 
+    Wady Quick Select:
+    -Najgorszy przypadek - jeśli wybór pivota jest nieoptymalny (np. pivot zawsze jest najgorszym elementem), Quick Select może działać w czasie O(n²).
+    -Złożoność implementacji - Quick Select jest trudniejszy do zaimplementowania niż klasyczne sortowanie (np. Array.sort()), ponieważ wymaga ręcznej implementacji funkcji partition.
+    -Nieuporządkowane dane - w przeciwieństwie do sortowania, Quick Select nie pozostawia tablicy posortowanej, co może być wadą, jeśli inne operacje wymagają uporządkowanego zbioru.
+*/
 
 function solution2(expenses) {
-    let results = {};
+    const allExpenses = [];
+    
+    // Funkcja pomocnicza do znalezienia pierwszej niedzieli w miesiącu
+    function getFirstSunday(year, month) {
+        for (let day = 1; day <= 7; day++) { // do 7, ponieważ pierwsza niedziela nie może być później
+            const date = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+            if (date.getDay() === 0) return day; // Niedziela = 0
+        }
+        return null;
+    }
 
     for (const month in expenses) {
-        let days = Object.keys(expenses[month]).map(Number).sort((a, b) => a - b);
-
-        let firstSunday = null;
-        for (let day of days) {
-            const date = new Date(`${month}-${String(day).padStart(2, '0')}`);
-            if (date.getDay() === 0) { // Niedziela
-                firstSunday = day;
-                break;
-            }
-        }
-
-        let allExpenses = [];
-        if (firstSunday !== null) {
-            for (let day of days) {
-                if (day > firstSunday) break;
-
-                const dayExpenses = expenses[month][String(day).padStart(2, '0')];
-                for (let category in dayExpenses) {
-                    allExpenses.push(...dayExpenses[category]);
+        const [year, monthNum] = month.split('-');
+        const firstSunday = getFirstSunday(year, monthNum);
+        
+        for (const day in expenses[month]) {
+            const dayNum = parseInt(day, 10);
+            if (dayNum <= firstSunday) {
+                // Zbieramy wydatki z dni <= pierwszej niedzieli
+                for (const category in expenses[month][day]) {
+                    allExpenses.push(...expenses[month][day][category]);
                 }
             }
         }
-
-        results[month] = allExpenses.length > 0 ? quickSelectMedian(allExpenses) : null;
     }
 
-    return results;
-}
+    if (allExpenses.length === 0) return null;
 
-function quickSelectMedian(arr) {
-    const n = arr.length;
-    if (n % 2 === 1) {
-        return quickSelect(arr, Math.floor(n / 2));
+    // Wyznaczanie mediany przy użyciu "quick select" (optymalizacja)
+    function quickSelect(arr, left, right, k) {
+        if (left === right) return arr[left];
+
+        const pivotIndex = partition(arr, left, right);
+        if (k === pivotIndex) return arr[k];
+        else if (k < pivotIndex) return quickSelect(arr, left, pivotIndex - 1, k);
+        else return quickSelect(arr, pivotIndex + 1, right, k);
+    }
+
+    function partition(arr, left, right) {
+        const pivot = arr[right];
+        let i = left;
+        for (let j = left; j < right; j++) {
+            if (arr[j] < pivot) {
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+                i++;
+            }
+        }
+        [arr[i], arr[right]] = [arr[right], arr[i]];
+        return i;
+    }
+
+    const n = allExpenses.length;
+    const mid = Math.floor(n / 2);
+    if (n % 2 === 0) {
+        const left = quickSelect([...allExpenses], 0, n - 1, mid - 1);
+        const right = quickSelect([...allExpenses], 0, n - 1, mid);
+        return (left + right) / 2;
     } else {
-        const mid1 = quickSelect(arr, n / 2 - 1);
-        const mid2 = quickSelect(arr, n / 2);
-        return (mid1 + mid2) / 2;
+        return quickSelect([...allExpenses], 0, n - 1, mid);
     }
 }
 
-function quickSelect(arr, k) {
-    if (arr.length === 1) return arr[0];
-
-    const pivot = arr[Math.floor(Math.random() * arr.length)];
-    const lows = arr.filter(x => x < pivot);
-    const highs = arr.filter(x => x > pivot);
-    const pivots = arr.filter(x => x === pivot);
-
-    if (k < lows.length) return quickSelect(lows, k);
-    else if (k < lows.length + pivots.length) return pivot;
-    else return quickSelect(highs, k - lows.length - pivots.length);
-}
-
-// Wywołanie funkcji solution2
-const result2 = solution2(expenses);
-console.log("Wynik z solution2:", result2);
-
-
+console.log(solution1(expenses));
+console.log(solution2(expenses)); 
